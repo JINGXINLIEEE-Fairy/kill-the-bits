@@ -17,8 +17,14 @@ from data import load_data
 from utils.training import evaluate
 from utils.watcher import ActivationWatcher as ActivationWatcherResNet
 from utils.utils import weight_from_centroids
+import torch.utils.data as data
+import torchvision
+import torchvision.transforms as transforms
 
 
+
+
+torch.cuda.empty_cache()
 parser = argparse.ArgumentParser(description='Inference for quantized networks')
 parser.add_argument('--model', default='resnet18', choices=['resnet18', 'resnet50', 'resnet50_semisup'],
                     help='Model to use for inference')
@@ -44,7 +50,11 @@ def main():
     model = 'resnet50' if args.model == 'resnet50_semisup' else args.model
     model = resnet_models.__dict__[model](pretrained=False).to(device)
     criterion = nn.CrossEntropyLoss()
-    _, test_loader = load_data(data_path=args.data_path, batch_size=args.batch_size, nb_workers=args.n_workers)
+    #_, test_loader = load_data(data_path=args.data_path, batch_size=args.batch_size, nb_workers=args.n_workers)
+    transform_test = transforms.Compose([transforms.ToTensor()])
+    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
+    test_loader = data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=10)
+    
     watcher = ActivationWatcherResNet(model)
 
     # conv1 layer (non-compressed)

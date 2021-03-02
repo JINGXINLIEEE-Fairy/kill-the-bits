@@ -41,19 +41,24 @@ parser.add_argument('--n-workers', default=20, type=int,
 
 
 def main():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    transform_test = transforms.Compose([transforms.ToTensor()])
+    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
+    test_loader = data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=10)
+    
     global args
     args = parser.parse_args()
-    device = args.device
-    state_dict_compressed = torch.load(args.state_dict_compressed)
+    #device = args.device
+    state_dict_compressed = torch.load(args.state_dict_compressed, map_location='cpu')
 
     # instantiating model
     model = 'resnet50' if args.model == 'resnet50_semisup' else args.model
     model = resnet_models.__dict__[model](pretrained=False).to(device)
     criterion = nn.CrossEntropyLoss()
     #_, test_loader = load_data(data_path=args.data_path, batch_size=args.batch_size, nb_workers=args.n_workers)
-    transform_test = transforms.Compose([transforms.ToTensor()])
-    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
-    test_loader = data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=10)
+    #transform_test = transforms.Compose([transforms.ToTensor()])
+    #testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
+    #test_loader = data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=10)
     
     watcher = ActivationWatcherResNet(model)
 

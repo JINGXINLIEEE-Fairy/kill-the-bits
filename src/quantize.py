@@ -28,7 +28,13 @@ from utils.watcher import ActivationWatcher
 from utils.dynamic_sampling import dynamic_sampling
 from utils.statistics import compute_size
 from utils.utils import centroids_from_weights, weight_from_centroids
+import torch.utils.data as data
+import torchvision
+import torchvision.transforms as transforms
+import gc
 
+#gc.collect()
+torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser(description='And the bit goes down: Revisiting the quantization of neural networks')
 
@@ -113,8 +119,17 @@ def main():
     layers = [layer for layer in watcher.layers[1:] if args.block in layer]
 
     # data loading code
-    train_loader, test_loader = load_data(data_path=args.data_path, batch_size=args.batch_size, nb_workers=args.n_workers)
-
+    #train_loader, test_loader = load_data(data_path=args.data_path, batch_size=args.batch_size, nb_workers=args.n_workers)
+    transform_train = transforms.Compose([ transforms.RandomHorizontalFlip(),transforms.ToTensor()])
+    trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
+    trainloader = data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers)
+    
+    transform_test = transforms.Compose([ transforms.ToTensor()])
+    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
+    testloader = data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=args.n_workers)
+    
+    
+    
     # parameters for the centroids optimizer
     opt_centroids_params_all = []
 
